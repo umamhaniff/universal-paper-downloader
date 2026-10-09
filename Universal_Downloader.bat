@@ -6,30 +6,37 @@ title Universal Paper Downloader - Hans x Gravi
 cd /d "%~dp0"
 
 :: Cek runtime executor (Prioritaskan uv jika tersedia, fallback ke python)
+set "RUNNER="
+set "RUNNER_NAME="
+
 uv --version >nul 2>&1
 if not errorlevel 1 (
     set "RUNNER=uv run"
     set "RUNNER_NAME=uv (Astral Rust Runner - Blazing Fast)"
-) else (
+)
+
+if not defined RUNNER (
     python --version >nul 2>&1
     if not errorlevel 1 (
         set "RUNNER=python"
         set "RUNNER_NAME=Standard Python"
-    ) else (
-        echo.
-        echo ======================================================================
-        echo  [!] PERINGATAN: Baik 'uv' maupun 'Python' tidak ditemukan di PATH!
-        echo  Silakan instal uv (https://astral.sh/uv) atau Python 3.8+
-        echo ======================================================================
-        echo.
-        pause
-        exit /b 1
     )
+)
+
+if not defined RUNNER (
+    echo.
+    echo ======================================================================
+    echo  [!] PERINGATAN: Baik 'uv' maupun 'Python' tidak ditemukan di PATH!
+    echo  Silakan instal uv dari https://astral.sh/uv atau Python 3.8+
+    echo ======================================================================
+    echo.
+    pause
+    exit /b 1
 )
 
 :MENU
 cls
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '             UNIVERSAL PAPER DOWNLOADER (Hans x Gravi)                ' -ForegroundColor Yellow; Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '  Engine: 5-Tier Waterfall | Cross-Publisher | Strict 8GB RAM Optimized' -ForegroundColor DarkGray; Write-Host '  Runtime: !RUNNER_NAME!' -ForegroundColor Green; Write-Host '======================================================================' -ForegroundColor Cyan }"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '             UNIVERSAL PAPER DOWNLOADER (Hans x Gravi)                ' -ForegroundColor Yellow; Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '  Engine: 5-Tier Waterfall | Cross-Publisher | Strict 8GB RAM Optimized' -ForegroundColor DarkGray; Write-Host '  Runtime: %RUNNER_NAME%' -ForegroundColor Green; Write-Host '======================================================================' -ForegroundColor Cyan }"
 
 echo.
 echo   [1] Unduh Paper Satuan (DOI / URL Nature, ScienceDirect, IEEE, dll)
