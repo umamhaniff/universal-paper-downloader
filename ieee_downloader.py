@@ -63,6 +63,14 @@ class IEEEDownloader:
         })
         self.delay = delay
         self._session_warmed_up = False
+        self._universal = None
+
+    def get_universal_engine(self):
+        """Lazy-loads the UniversalDownloader with full 5-tier cascade, DoH, and multi-mirror pool."""
+        if self._universal is None:
+            from universal_downloader import UniversalDownloader
+            self._universal = UniversalDownloader(delay=self.delay)
+        return self._universal
 
     @staticmethod
     def to_long_path_safe(path: Path) -> Path:
@@ -188,50 +196,13 @@ class IEEEDownloader:
 
     def resolve_scihub_pdf_stream(self, doi: str) -> tuple[str | None, str | None]:
         """
-        Attempts to resolve PDF stream URL across Sci-Hub mirrors.
+        Attempts to resolve PDF stream URL across Sci-Hub mirrors with In-App DoH bypass.
         Returns (pdf_url, referer_used).
         """
-        for mirror in SCIHUB_MIRRORS:
-            target_url = f"{mirror}/{doi}"
-            try:
-                res = self.session.get(target_url, timeout=12)
-                if res.status_code == 200:
-                    soup = BeautifulSoup(res.text, "html.parser")
-
-                    # 1. Semantic meta tag (Modern Sci-Hub)
-                    meta_pdf = soup.find("meta", attrs={"name": "citation_pdf_url"})
-                    if meta_pdf and meta_pdf.get("content"):
-                        src = meta_pdf["content"]
-                        if src.startswith("//"):
-                            src = "https:" + src
-                        elif src.startswith("/"):
-                            src = mirror + src
-                        return src, target_url
-
-                    # 2. Embed or iframe
-                    embed = soup.find(["embed", "iframe"], attrs={"src": True})
-                    if embed:
-                        src = embed["src"]
-                        if src.startswith("//"):
-                            src = "https:" + src
-                        elif src.startswith("/"):
-                            src = mirror + src
-                        return src, target_url
-
-                    # 3. Button with location.href
-                    btn = soup.find(lambda el: el.name in ["button", "a"] and el.get("onclick") and "location.href" in el.get("onclick"))
-                    if btn:
-                        match = re.search(r"location\.href\s*=\s*['\"]([^'\"]+)['\"]", btn["onclick"])
-                        if match:
-                            src = match.group(1)
-                            if src.startswith("//"):
-                                src = "https:" + src
-                            elif src.startswith("/"):
-                                src = mirror + src
-                            return src, target_url
-            except Exception:
-                continue
-
+        engine = self.get_universal_engine()
+        src, _, referer = engine.resolve_scihub(doi)
+        if src:
+            return src, referer
         return None, None
 
     def stream_download(self, url: str, dest_path: Path, referer: str | None = None) -> bool:
@@ -325,12 +296,25 @@ class IEEEDownloader:
             if stream_url:
                 success = self.stream_download(stream_url, dest_file, referer="https://ieeexplore.ieee.org/")
 
-        # 2. Sci-Hub fallback if locked
+        # 2. Universal Waterfall Cascade fallback if locked
         if not success and doi:
-            print(f"[*] Resolving locked paper via Sci-Hub mirrors (DOI: {doi})...")
-            pdf_stream, referer_used = self.resolve_scihub_pdf_stream(doi)
-            if pdf_stream:
-                success = self.stream_download(pdf_stream, dest_file, referer=referer_used)
+            print(f"[*] Resolving locked paper via Universal Engine & Sci-Hub DoH (DOI: {doi})...")
+            engine = self.get_universal_engine()
+            oa_url, _ = engine.resolve_unpaywall(doi)
+            if oa_url and engine.stream_download(oa_url, dest_file):
+                success = True
+            if not success:
+                oa_url, _ = engine.resolve_openalex(doi)
+                if oa_url and engine.stream_download(oa_url, dest_file):
+                    success = True
+            if not success:
+                oa_url, _ = engine.resolve_semanticscholar(doi)
+                if oa_url and engine.stream_download(oa_url, dest_file):
+                    success = True
+            if not success:
+                scihub_src = engine.download_from_scihub_cascade(doi, dest_file)
+                if scihub_src:
+                    success = True
 
         if success:
             print(f"\n[OK] Document successfully downloaded!")
@@ -428,12 +412,25 @@ class IEEEDownloader:
                 if stream_url:
                     success = self.stream_download(stream_url, dest_file, referer="https://ieeexplore.ieee.org/")
 
-            # 2. Sci-Hub mirror fallback for locked or failed direct access
+            # 2. Universal Waterfall Cascade fallback for locked or failed direct access
             if not success and doi:
-                print(f"    -> Resolving DOI ({doi}) via Sci-Hub mirrors...")
-                pdf_stream, referer_used = self.resolve_scihub_pdf_stream(doi)
-                if pdf_stream:
-                    success = self.stream_download(pdf_stream, dest_file, referer=referer_used)
+                print(f"    -> Resolving DOI ({doi}) via Universal Engine & Sci-Hub DoH...")
+                engine = self.get_universal_engine()
+                oa_url, _ = engine.resolve_unpaywall(doi)
+                if oa_url and engine.stream_download(oa_url, dest_file):
+                    success = True
+                if not success:
+                    oa_url, _ = engine.resolve_openalex(doi)
+                    if oa_url and engine.stream_download(oa_url, dest_file):
+                        success = True
+                if not success:
+                    oa_url, _ = engine.resolve_semanticscholar(doi)
+                    if oa_url and engine.stream_download(oa_url, dest_file):
+                        success = True
+                if not success:
+                    scihub_src = engine.download_from_scihub_cascade(doi, dest_file)
+                    if scihub_src:
+                        success = True
 
             if success:
                 print(f"    [+] Saved: {filename} ({dest_file.stat().st_size // 1024} KB)")
