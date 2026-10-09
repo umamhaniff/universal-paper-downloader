@@ -661,13 +661,13 @@ class UniversalDownloader:
         if doi:
             cand_url, cand_label = self.resolve_unpaywall(doi)
             if cand_url:
-                print("│ [✓] Tier 1: Unpaywall (Legal Open Access) ──► DITEMUKAN!           │")
-                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                print("│ [*] Tier 1: Unpaywall (Legal Open Access) ──► Menguji tautan...    │")
                 if self.stream_download(cand_url, dest_file):
+                    print("│ [✓] Tier 1: Unpaywall (Legal Open Access) ──► VALID & DISIMPAN!   │")
                     success = True
                     source_label = cand_label
                 else:
-                    print("│     • Link bukan berkas PDF valid. Melanjutkan cascade...            │")
+                    print("│ [-] Tier 1: Unpaywall ──► Halaman web/paywall (bukan PDF asli)     │")
             else:
                 print("│ [-] Tier 1: Unpaywall (Legal Open Access) ──► Tidak ada file OA    │")
 
@@ -675,13 +675,13 @@ class UniversalDownloader:
         if not success and doi:
             cand_url, cand_label = self.resolve_openalex(doi)
             if cand_url:
-                print("│ [✓] Tier 2: OpenAlex Global Index         ──► DITEMUKAN!           │")
-                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                print("│ [*] Tier 2: OpenAlex Global Index         ──► Menguji tautan...    │")
                 if self.stream_download(cand_url, dest_file):
+                    print("│ [✓] Tier 2: OpenAlex Global Index         ──► VALID & DISIMPAN!   │")
                     success = True
                     source_label = cand_label
                 else:
-                    print("│     • Link bukan berkas PDF valid. Melanjutkan cascade...            │")
+                    print("│ [-] Tier 2: OpenAlex ──► Halaman web/paywall (bukan PDF asli)     │")
             else:
                 print("│ [-] Tier 2: OpenAlex Global Index         ──► Tidak ada file OA    │")
 
@@ -689,13 +689,13 @@ class UniversalDownloader:
         if not success and doi:
             cand_url, cand_label = self.resolve_semanticscholar(doi)
             if cand_url:
-                print("│ [✓] Tier 3: Semantic Scholar Open Access  ──► DITEMUKAN!           │")
-                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                print("│ [*] Tier 3: Semantic Scholar Open Access  ──► Menguji tautan...    │")
                 if self.stream_download(cand_url, dest_file):
+                    print("│ [✓] Tier 3: Semantic Scholar Open Access  ──► VALID & DISIMPAN!   │")
                     success = True
                     source_label = cand_label
                 else:
-                    print("│     • Link bukan berkas PDF valid. Melanjutkan cascade...            │")
+                    print("│ [-] Tier 3: Semantic Scholar ──► Halaman web/paywall (bukan PDF)  │")
             else:
                 print("│ [-] Tier 3: Semantic Scholar Open Access  ──► Tidak ada file OA    │")
 
@@ -711,13 +711,13 @@ class UniversalDownloader:
                 target_ieee = ieee_arnumber or input_query
                 cand_url, cand_label = self.resolve_ieee_direct(target_ieee)
                 if cand_url:
-                    print("│ [✓] Tier 4: IEEE Open-Access Stamp        ──► DITEMUKAN!           │")
-                    print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                    print("│ [*] Tier 4: IEEE Open-Access Stamp        ──► Menguji tautan...    │")
                     if self.stream_download(cand_url, dest_file, referer="https://ieeexplore.ieee.org/"):
+                        print("│ [✓] Tier 4: IEEE Open-Access Stamp        ──► VALID & DISIMPAN!   │")
                         success = True
                         source_label = cand_label
                     else:
-                        print("│     • Paper berstatus terkunci. Melanjutkan cascade...               │")
+                        print("│ [-] Tier 4: IEEE Stamp ──► Paper berstatus terkunci/paywall        │")
                 else:
                     print("│ [-] Tier 4: IEEE Open-Access Stamp        ──► Paper Berstatus Terkunci │")
             else:
