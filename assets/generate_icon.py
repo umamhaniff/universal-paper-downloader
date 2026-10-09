@@ -213,7 +213,7 @@ def draw_3d_journal_tome():
     print(f"[*] High-res 3D tome logo saved at: {png_path.resolve()}")
 
     # 2. Multi-Resolution Windows ICO
-    ico_path = Path("app_icon.ico")
+    ico_path = assets_dir / "app_icon.ico"
     sizes = [(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)]
     logo_512.save(ico_path, format="ICO", sizes=sizes)
     print(f"[*] Multi-res 3D tome app_icon.ico saved at: {ico_path.resolve()}")
