@@ -1,14 +1,23 @@
-# Universal Paper Downloader
+<p align="center">
+  <img src="assets/logo.png" alt="Universal Paper Downloader Logo" width="160" height="160" />
+</p>
 
-> Built by **Hans x Gravi**
-> 
+<h1 align="center">Universal Paper Downloader</h1>
+
+<p align="center">
+  <em>The Scholarly Nexus — Cross-Publisher Academic Paper Downloader</em><br />
+  <strong>Built by Hans x Gravi</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/FongYoong/ieee_journal_downloader"><img src="https://img.shields.io/badge/Derived%20From-FongYoong%2Fieee--journal--downloader-lightgrey.svg" alt="Original Upstream" /></a>
+  <a href="#architecture"><img src="https://img.shields.io/badge/Resolver-5--Tier%20Waterfall-brightgreen.svg" alt="Architecture" /></a>
+  <a href="#performance--memory"><img src="https://img.shields.io/badge/Memory-Strict%208GB%20Optimized-success.svg" alt="RAM Optimized" /></a>
+</p>
+
 > 📌 **Open-Source Attribution:** Berakar dan dikembangkan lebih lanjut dari proyek fondasi [FongYoong/ieee_journal_downloader](https://github.com/FongYoong/ieee_journal_downloader) oleh Fong Chien Yoong, kemudian direarsitektur dan diperluas menjadi pengunduh jurnal universal multi-penerbit oleh **Hans x Gravi**.
-
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Original Upstream](https://img.shields.io/badge/Derived%20From-FongYoong%2Fieee--journal--downloader-lightgrey.svg)](https://github.com/FongYoong/ieee_journal_downloader)
-[![Architecture: Waterfall Cascade](https://img.shields.io/badge/Resolver-5--Tier%20Waterfall-brightgreen.svg)](#architecture)
-[![RAM Optimized](https://img.shields.io/badge/Memory-Strict%208GB%20Optimized-success.svg)](#performance--memory)
 
 **Universal Paper Downloader** adalah aplikasi pengunduh artikel ilmiah dan jurnal akademik serbaguna berbasis terminal (*CLI*) dan satu-klik (*One-Click Launcher*). Mampu mengunduh dokumen ilmiah dari berbagai penerbit internasional ternama (**Nature, Springer, Elsevier / ScienceDirect, Wiley, IEEE, ACM, Taylor & Francis, PubMed, dll.**) secara instan berdasarkan DOI, tautan URL paper, maupun daftar batch.
 

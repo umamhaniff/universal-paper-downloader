@@ -1,98 +1,183 @@
 """
-Generate high-quality multi-resolution Windows Icon (.ico) for Universal Paper Downloader.
+Generate bespoke, premium, high-end Logo & Icon for Universal Paper Downloader.
+Concept: 'The Scholarly Nexus' - An abstract geometric crystalline manuscript
+fused with an orbital celestial portal in cyber-cyan & electric violet.
+Supersampled at 1024x1024 and downscaled with Lanczos for razor-sharp fidelity.
 Built by Hans x Gravi
 """
 
-from PIL import Image, ImageDraw, ImageFont
 import math
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFilter
 
-def create_app_icon(output_path="app_icon.ico"):
-    size = 256
-    # Create RGBA image
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+def create_premium_branding():
+    # 1. Supersampled rendering canvas
+    CANVAS_SIZE = 1024
+    img = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # 1. Base Squircle / Rounded Background (Deep Royal Blue Gradient-ish)
-    bg_color = (15, 23, 42, 255)       # Slate 900
-    border_color = (56, 189, 248, 255) # Sky 400
-    accent_blue = (30, 58, 138, 255)   # Blue 900
+    center = CANVAS_SIZE / 2
     
-    # Draw rounded rect backplate
-    draw.rounded_rectangle([12, 12, size - 12, size - 12], radius=48, fill=bg_color, outline=border_color, width=5)
-
-    # Subtle inner glow / gradient plate
-    draw.rounded_rectangle([20, 20, size - 20, size - 20], radius=40, fill=accent_blue)
-
-    # 2. Document / Paper Sheet (White / Light Slate with folded corner)
-    # Paper bounds: left=60, top=45, right=180, bottom=205
-    # Fold corner at top right: corner size = 32
-    p_left, p_top, p_right, p_bottom = 64, 48, 192, 208
-    fold = 36
-
-    paper_fill = (248, 250, 252, 255) # Slate 50
-    paper_shadow = (203, 213, 225, 255) # Slate 300
+    # --- A. BACKGROUND CONTAINER (Luxury Obsidian Squircle) ---
+    margin = 56
+    radius = 210
+    bg_box = [margin, margin, CANVAS_SIZE - margin, CANVAS_SIZE - margin]
     
-    # Paper polygon with folded corner
-    paper_coords = [
-        (p_left, p_top),
-        (p_right - fold, p_top),
-        (p_right, p_top + fold),
-        (p_right, p_bottom),
-        (p_left, p_bottom)
+    # Outer ambient glow
+    glow_img = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow_img)
+    glow_draw.rounded_rectangle(bg_box, radius=radius, fill=(56, 189, 248, 80))
+    glow_img = glow_img.filter(ImageFilter.GaussianBlur(35))
+    img.paste(glow_img, (0, 0), glow_img)
+
+    # Base dark container
+    draw.rounded_rectangle(bg_box, radius=radius, fill=(11, 15, 26, 255), outline=(56, 189, 248, 200), width=10)
+    
+    # Inner border contour
+    inner_box = [margin + 16, margin + 16, CANVAS_SIZE - margin - 16, CANVAS_SIZE - margin - 16]
+    draw.rounded_rectangle(inner_box, radius=radius - 12, outline=(99, 102, 241, 100), width=4)
+
+    # --- B. UNIVERSAL ORBITAL CELESTIAL RINGS ---
+    # Large tilted dynamic ellipse ring
+    ring_img = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+    ring_draw = ImageDraw.Draw(ring_img)
+    
+    # Elliptical orbit 1 (cyan accent)
+    ring_bbox = [center - 360, center - 200, center + 360, center + 200]
+    ring_draw.ellipse(ring_bbox, outline=(56, 189, 248, 180), width=8)
+    
+    # Elliptical orbit 2 (violet accent, intersecting angle)
+    ring_bbox_2 = [center - 220, center - 350, center + 220, center + 350]
+    ring_draw.ellipse(ring_bbox_2, outline=(168, 85, 247, 140), width=6)
+
+    # Orbit nodes / planetary particles
+    nodes = [
+        (center + 340, center - 60, (56, 189, 248, 255), 14),
+        (center - 310, center + 100, (14, 165, 233, 255), 12),
+        (center + 120, center + 320, (192, 132, 252, 255), 16),
+        (center - 140, center - 310, (244, 114, 182, 255), 12),
     ]
-    draw.polygon(paper_coords, fill=paper_fill)
+    for nx, ny, ncolor, nr in nodes:
+        ring_draw.ellipse([nx - nr, ny - nr, nx + nr, ny + nr], fill=ncolor, outline=(255, 255, 255, 255), width=3)
 
-    # Fold flap (top right triangle)
-    flap_coords = [
-        (p_right - fold, p_top),
-        (p_right - fold, p_top + fold),
-        (p_right, p_top + fold)
-    ]
-    draw.polygon(flap_coords, fill=paper_shadow, outline=(148, 163, 184, 255), width=2)
+    img = Image.alpha_composite(img, ring_img)
+    draw = ImageDraw.Draw(img)
 
-    # 3. Text lines on Paper
-    line_color = (100, 116, 139, 255) # Slate 500
-    header_color = (2, 132, 199, 255) # Sky 600
+    # --- C. CORE ICON: ISOMETRIC GEOMETRIC WINGS OF KNOWLEDGE (OPEN MANUSCRIPT PORTAL) ---
+    # Left wing (Cyber Cyan Gradient Facet)
+    # Right wing (Electric Violet/Indigo Facet)
+    # Center spine / Prism Zenith
     
-    # Title line
-    draw.rounded_rectangle([p_left + 16, p_top + 22, p_right - fold - 8, p_top + 30], radius=3, fill=header_color)
-
-    # Article text lines
-    draw.rounded_rectangle([p_left + 16, p_top + 54, p_right - 18, p_top + 60], radius=2, fill=line_color)
-    draw.rounded_rectangle([p_left + 16, p_top + 70, p_right - 18, p_top + 76], radius=2, fill=line_color)
-    draw.rounded_rectangle([p_left + 16, p_top + 86, p_right - 28, p_top + 92], radius=2, fill=line_color)
-    draw.rounded_rectangle([p_left + 16, p_top + 102, p_right - 18, p_top + 108], radius=2, fill=line_color)
-
-    # 4. Vibrant Download Badge / Academic Emblem in bottom-right quadrant
-    # Circle badge
-    badge_center = (180, 180)
-    badge_radius = 42
-    b_x1 = badge_center[0] - badge_radius
-    b_y1 = badge_center[1] - badge_radius
-    b_x2 = badge_center[0] + badge_radius
-    b_y2 = badge_center[1] + badge_radius
-
-    # Outer badge circle with glowing outline
-    draw.ellipse([b_x1, b_y1, b_x2, b_y2], fill=(14, 165, 233, 255), outline=(255, 255, 255, 255), width=4) # Sky 500
-
-    # Down Arrow inside Badge
-    arrow_color = (255, 255, 255, 255)
-    # Stem
-    draw.rectangle([badge_center[0] - 6, badge_center[1] - 22, badge_center[0] + 6, badge_center[1] + 6], fill=arrow_color)
-    # Head
+    y_shift = 15
+    spine_x = center
+    spine_top = center - 160 + y_shift
+    spine_bottom = center + 180 + y_shift
+    
+    # Wing Left Outer
+    wing_l_outer = (center - 250, center - 40 + y_shift)
+    wing_l_mid = (center - 180, center + 140 + y_shift)
+    wing_l_bottom = (center - 40, spine_bottom - 20)
+    
+    # Wing Left Main Facet (Cyan Blue)
     draw.polygon([
-        (badge_center[0] - 18, badge_center[1] + 4),
-        (badge_center[0] + 18, badge_center[1] + 4),
-        (badge_center[0], badge_center[1] + 24)
-    ], fill=arrow_color)
+        (spine_x, spine_top),
+        wing_l_outer,
+        wing_l_mid,
+        (spine_x, spine_bottom)
+    ], fill=(14, 165, 233, 240), outline=(224, 242, 254, 255))
+    
+    # Wing Left Shadow / Fold Sub-Facet
+    draw.polygon([
+        wing_l_mid,
+        (spine_x, spine_bottom),
+        (spine_x - 30, spine_bottom + 45),
+        wing_l_mid
+    ], fill=(3, 105, 161, 240))
 
-    # Horizontal tray line under arrow
-    draw.rounded_rectangle([badge_center[0] - 20, badge_center[1] + 24, badge_center[0] + 20, badge_center[1] + 28], radius=2, fill=arrow_color)
+    # Wing Right Outer
+    wing_r_outer = (center + 250, center - 40 + y_shift)
+    wing_r_mid = (center + 180, center + 140 + y_shift)
+    
+    # Wing Right Main Facet (Electric Violet)
+    draw.polygon([
+        (spine_x, spine_top),
+        wing_r_outer,
+        wing_r_mid,
+        (spine_x, spine_bottom)
+    ], fill=(139, 92, 246, 240), outline=(243, 232, 255, 255))
+    
+    # Wing Right Shadow / Fold Sub-Facet
+    draw.polygon([
+        wing_r_mid,
+        (spine_x, spine_bottom),
+        (spine_x + 30, spine_bottom + 45),
+        wing_r_mid
+    ], fill=(91, 33, 182, 240))
 
-    # Save as multi-resolution ICO file
+    # --- D. INNER KINETIC LIGHT LAYERS (Transparent Geometric Pages) ---
+    # Inner Left Page (Lighter Cyan)
+    draw.polygon([
+        (spine_x, spine_top + 45),
+        (center - 180, center - 10 + y_shift),
+        (center - 130, center + 120 + y_shift),
+        (spine_x, spine_bottom - 10)
+    ], fill=(56, 189, 248, 220), outline=(255, 255, 255, 220))
+
+    # Inner Right Page (Lighter Violet/Magenta)
+    draw.polygon([
+        (spine_x, spine_top + 45),
+        (center + 180, center - 10 + y_shift),
+        (center + 130, center + 120 + y_shift),
+        (spine_x, spine_bottom - 10)
+    ], fill=(168, 85, 247, 220), outline=(255, 255, 255, 220))
+
+    # --- E. ZENITH PORTAL APEX (Glowing Prism Star / Diamond Core) ---
+    # Radiant Diamond at Zenith
+    d_size = 54
+    d_cy = spine_top - 65
+    diamond_coords = [
+        (center, d_cy - d_size),
+        (center + d_size * 0.75, d_cy),
+        (center, d_cy + d_size),
+        (center - d_size * 0.75, d_cy)
+    ]
+    # Diamond Glow
+    for d_offset in [16, 8]:
+        draw.polygon([
+            (center, d_cy - d_size - d_offset),
+            (center + d_size * 0.75 + d_offset, d_cy),
+            (center, d_cy + d_size + d_offset),
+            (center - d_size * 0.75 - d_offset, d_cy)
+        ], outline=(254, 240, 138, 90), width=3)
+
+    # Core Diamond (Golden Beacon of Knowledge)
+    draw.polygon(diamond_coords, fill=(250, 204, 21, 255), outline=(255, 255, 255, 255))
+    
+    # Inner Diamond Facet
+    draw.polygon([
+        (center, d_cy - d_size),
+        (center + d_size * 0.75, d_cy),
+        (center, d_cy + d_size * 0.3)
+    ], fill=(254, 240, 138, 255))
+
+    # Vertical light ray beam from diamond into book spine
+    draw.line([(center, d_cy + d_size), (center, spine_top + 40)], fill=(255, 255, 255, 220), width=6)
+
+    # --- F. EXPORT HIGH-RES ASSETS ---
+    assets_dir = Path("assets")
+    assets_dir.mkdir(exist_ok=True)
+    
+    # 1. High-Res PNG (512x512 with high-quality Lanczos downsampling)
+    logo_512 = img.resize((512, 512), Image.Resampling.LANCZOS)
+    logo_png_path = assets_dir / "logo.png"
+    logo_512.save(logo_png_path, "PNG")
+    print(f"[*] High-res logo saved at: {logo_png_path.resolve()}")
+
+    # 2. Multi-Resolution Windows ICO
+    ico_path = Path("app_icon.ico")
     sizes = [(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)]
-    img.save(output_path, format="ICO", sizes=sizes)
-    print(f"[*] Icon successfully created at {output_path} with sizes {sizes}")
+    logo_512.save(ico_path, format="ICO", sizes=sizes)
+    print(f"[*] Multi-res app_icon.ico saved at: {ico_path.resolve()} with sizes {sizes}")
 
 if __name__ == "__main__":
-    create_app_icon()
+    create_premium_branding()
