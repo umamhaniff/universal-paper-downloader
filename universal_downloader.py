@@ -105,13 +105,27 @@ class UniversalDownloader:
         - 10.1038/s41586-020-2649-2
         - https://doi.org/10.1038/s41586-020-2649-2
         - https://link.springer.com/article/10.1007/s11263-020-01387-4
+        - https://www.taylorfrancis.com/chapters/edit/10.1201/9781003642886-21/ensemble-machine-...
         """
         text = unquote(text.strip())
+
+        # 1. Specialized publisher URL patterns with descriptive title slugs
+        tf_match = re.search(r"/(?:chapters|books)/(?:edit|mono)/(10\.\d{4,9}/[^/?#]+)", text)
+        if tf_match:
+            return tf_match.group(1).rstrip(".,;")
+
+        # 2. General DOI regex
         doi_regex = r"(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)"
         match = re.search(doi_regex, text)
         if match:
-            doi = match.group(1).rstrip(".,;")
-            return doi
+            candidate = match.group(1).rstrip(".,;")
+            # If candidate was extracted from a URL and contains additional path slashes (slugs)
+            parts = candidate.split("/")
+            if len(parts) > 2:
+                # If the 3rd part looks like an article title slug (contains multiple hyphens or long words)
+                if "-" in parts[2] or len(parts[2]) > 15:
+                    return f"{parts[0]}/{parts[1]}"
+            return candidate
         return None
 
     def fetch_crossref_metadata(self, doi: str) -> dict:
