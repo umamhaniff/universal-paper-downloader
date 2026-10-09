@@ -241,7 +241,13 @@ class UniversalDownloader:
                     soup = BeautifulSoup(res.text, "html.parser")
                     iframe = soup.find("iframe")
                     if iframe and iframe.get("src"):
-                        return iframe.get("src"), "IEEE Open Access Stamp"
+                        src = iframe.get("src")
+                        if "getpdf" in src.lower() or ".pdf" in src.lower():
+                            if src.startswith("//"):
+                                src = "https:" + src
+                            elif src.startswith("/"):
+                                src = "https://ieeexplore.ieee.org" + src
+                            return src, "IEEE Open Access Stamp"
             except Exception:
                 pass
         return None, None
@@ -723,8 +729,8 @@ class UniversalDownloader:
             print("│ • Mengalirkan data langsung ke disk (chunk 64KB, RAM-friendly)...   │")
             print("│ • Memverifikasi integritas format (%PDF magic bytes) ──► VALID!      │")
         else:
-            print("│ • Status : Berkas tidak tersedia atau terkunci di semua tier.        │")
-            print("│ • Verifikasi berkas ──► GAGAL / KORUP                                │")
+            print("│ • Status   : Berkas terkunci paywall atau belum terarsip di repositori.│")
+            print("│ • Verifikasi: Seluruh 5 Tier selesai dicoba tanpa stream berkas valid.│")
         print("└" + "─" * 70 + "┘")
 
         # -------------------------------------------------------------
