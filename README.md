@@ -1,108 +1,117 @@
-# IEEE Journal Downloader
+# Universal Paper Downloader
 
-* A cross-platform terminal program which tries to download every article in a specified journal and merge the documents into one **PDF** file.
-* **May not work for some new journals**
-* [▶️ YouTube Demo](https://youtu.be/5HWfE48WohY)
-* Supported download domains:
-    * IEEE if document is free
-    * [SciHub (Recommended, fast)](https://sci-hub.se/)
-    * [LibGen (Slow)](https://libgen.is/scimag/)
-* **💻 Download:**
-    * [⊞ Windows (5.24 MB)](https://github.com/FongYoong/ieee_journal_downloader/releases/download/0.4.0/ieee_journal_downloader.exe)
+> Built by **Hans x Gravi**
+> 
+> 📌 **Open-Source Attribution:** Berakar dan dikembangkan lebih lanjut dari proyek fondasi [FongYoong/ieee_journal_downloader](https://github.com/FongYoong/ieee_journal_downloader) oleh Fong Chien Yoong, kemudian direarsitektur dan diperluas menjadi pengunduh jurnal universal multi-penerbit oleh **Hans x Gravi**.
 
-    * [🐧 Linux (10.64 MB)](https://github.com/FongYoong/ieee_journal_downloader/releases/download/0.4.0/ieee_journal_downloader_linux) .
-* ⚠ Possible errors:
-    * Windows: If Microsoft Defender SmartScreen appears, click **More Info** and then click **Run Anyway**.
-    * Linux:     If permission denied, try `chmod +x ieee_journal_downloader_linux`
-* 🐛 Possible bugs:
-    * The PDF merging process has some bugs and the page order may get mixed up in some cases. Due to time constraints, I may not fix this anytime soon as I'm more interested in the separate documents.
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Original Upstream](https://img.shields.io/badge/Derived%20From-FongYoong%2Fieee--journal--downloader-lightgrey.svg)](https://github.com/FongYoong/ieee_journal_downloader)
+[![Architecture: Waterfall Cascade](https://img.shields.io/badge/Resolver-5--Tier%20Waterfall-brightgreen.svg)](#architecture)
+[![RAM Optimized](https://img.shields.io/badge/Memory-Strict%208GB%20Optimized-success.svg)](#performance--memory)
 
-***
-## Usage
+**Universal Paper Downloader** adalah aplikasi pengunduh artikel ilmiah dan jurnal akademik serbaguna berbasis terminal (*CLI*) dan satu-klik (*One-Click Launcher*). Mampu mengunduh dokumen ilmiah dari berbagai penerbit internasional ternama (**Nature, Springer, Elsevier / ScienceDirect, Wiley, IEEE, ACM, Taylor & Francis, PubMed, dll.**) secara instan berdasarkan DOI, tautan URL paper, maupun daftar batch.
 
-1) Identify the **IEEE journal link**.
-    Sample link: [https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=8802299&punumber=8014](https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=8802299&punumber=8014)
+Aplikasi ini juga mempertahankan kapabilitas khusus untuk mengunduh seluruh artikel pada suatu edisi jurnal IEEE dan menggabungkannya (*sequential merge*) menjadi satu buku PDF utuh.
 
-    ![get_link](https://i.imgur.com/MWBQCRX.png)
+---
 
-2) Double click on the program or invoke it from the command line.
+## ⚡ Fitur Utama
 
-3) Specify the journal link manually or from the clipboard:
+* **🌍 Universal Cross-Publisher Support:** Bekerja untuk hampir seluruh penerbit ilmiah dunia via DOI atau URL paper.
+* **🌊 5-Tier Waterfall Cascade Resolution:**
+  1. **Tier 1 — Unpaywall API:** Mengakses preprint legal dan author accepted manuscripts.
+  2. **Tier 2 — OpenAlex Global Index:** Repositori pustaka akademik dunia dengan direct OA link.
+  3. **Tier 3 — Semantic Scholar API:** Pencarian Open Access direct PDF endpoints.
+  4. **Tier 4 — IEEE OA Stamp Resolver:** Penanganan khusus berkas Open Access dari IEEE Xplore.
+  5. **Tier 5 — Sci-Hub Multi-Mirror:** Otomatis mem-bypass paywall jurnal berbayar melalui cermin mirror aktif (`.ru`, `.st`, `.se`).
+* **📋 Multi-Input Fleksibel:**
+  * Mode Interaktif: Cukup jalankan program dan tekan Enter untuk membaca link/DOI dari clipboard.
+  * Argumen Baris Perintah: Oper DOI atau URL langsung di terminal.
+  * Batch Processing: Dukungan argumen `--file daftar_doi.txt` untuk mengunduh puluhan paper sekaligus secara berurutan.
+* **📚 IEEE Issue Master Merger:** Mengunduh 1 issue/edisi IEEE lengkap dan menyatukannya menjadi satu master PDF.
+* **💾 Memory & RAM Efficient (Strict 8GB Optimization):**
+  * Unduhan berbasis chunk streaming (64KB) langsung ke disk tanpa menimbun di RAM.
+  * Validasi magic bytes `%PDF` pada header berkas sebelum disimpan.
+  * Penggabungan PDF bertahap tanpa memory footprint berlebih.
 
-    ![specify_link](https://i.imgur.com/FxGNVUg.png)
+---
 
-    Alternatively, the link can be specified as an argument when you start the program from the terminal:
-    ```bash
-    # Linux
-    ./ieee_journal_downloader "your_link_here"
-    ./ieee_journal_downloader "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
+## 🚀 Panduan Penggunaan
 
-    # Windows
-    ieee_journal_downloader.exe "your_link_here"
-    ieee_journal_downloader.exe "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
-    ```
+### 1. One-Click Launcher (Windows)
+Klik ganda berkas **`run_downloader.bat`** atau gunakan shortcut **"Universal Academic Paper Downloader"** di Windows Start Menu.
 
-4) Select the download domain:
+### 2. Mode Interaktif CLI
+Jalankan skrip tanpa argumen, kamu bisa mengetikkan DOI/URL atau langsung tekan Enter untuk mengambil isi clipboard:
+```powershell
+python universal_downloader.py
+```
 
-    ![domain](https://i.imgur.com/KK9N6ly.png)
+### 3. Mengunduh via DOI Tunggal
+Mendukung semua format DOI:
+```powershell
+# Contoh Nature
+python universal_downloader.py "10.1038/s41586-020-2649-2"
 
-5) Wait for the documents to be fetched:
+# Contoh Elsevier / ScienceDirect
+python universal_downloader.py "10.1016/j.cell.2020.08.024"
+```
 
-    ![fetch](https://i.imgur.com/kHrtfAY.png)
+### 4. Mengunduh via URL Halaman Paper
+Salin URL langsung dari browser:
+```powershell
+python universal_downloader.py "https://www.nature.com/articles/s41586-020-2649-2"
+```
 
-6) After downloading a couple of documents, the program will wait for 60 seconds to avoid any human captchas:
+### 5. Mengunduh Banyak Paper Sekaligus (Batch Mode)
+Buat berkas teks (misal `daftar_paper.txt`) berisi satu DOI/URL per baris, lalu jalankan:
+```powershell
+python universal_downloader.py --file daftar_paper.txt
+```
 
-    ![captcha](https://i.imgur.com/AZjamsg.png)
+### 6. Mengunduh 1 Edisi Jurnal IEEE Penuh (Merged PDF)
+Untuk mengunduh satu edisi utuh IEEE:
+```powershell
+python ieee_downloader.py "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
+```
 
-7) The merged PDF will be stored in the folder **pdf_output** relative to the program's location:
+---
 
-    ![done](https://i.imgur.com/FgNdTvn.png)
+## 📂 Struktur Direktori Output
 
-8) Some journals, especially very recent ones, may not be available:
+Semua hasil unduhan disimpan secara terstruktur di folder `pdf_output/`:
 
-    ![fail](https://i.imgur.com/R3ETv3Y.png)
-***
-## Background Info
+```
+pdf_output/
+├── Universal_Downloads/
+│   └── {Publisher_or_Journal_Name}/
+│       └── {Safe_Article_Title}.pdf
+├── Single_Articles/
+│   └── {Publication_Title}/
+│       └── {Safe_Title}.pdf
+└── {Publication_Title}/
+    └── Volume_{Vol}_Issue_{Issue}/
+        ├── Volume_{Vol}_Issue_{Issue}.pdf   <-- Master Merged PDF
+        ├── error_log.txt                    <-- Log kegagalan (jika ada)
+        └── separate/
+            ├── 01_{Safe_Title}.pdf
+            └── 02_{Safe_Title}.pdf
+```
 
-* [angular_main.js](https://github.com/FongYoong/ieee_journal_downloader/blob/master/misc/angular_main.js) contains the main Angular code of the iEEE journal website. There are plenty REST API links littered throughout the code.
-* [requests_tracking_data.txt](https://github.com/FongYoong/ieee_journal_downloader/blob/master/misc/requests_tracking_data.txt) is a list of network requests made by the IEEE journal website. The relevant requests are listed in [relevant_requests.txt](https://github.com/FongYoong/ieee_journal_downloader/blob/master/misc/relevant_requests.txt). 
-* [sample_toc_api_data.json](https://github.com/FongYoong/ieee_journal_downloader/blob/master/misc/sample_toc_api_data.json) contains a sample response returned by a POST request to [https://ieeexplore.ieee.org/rest/search/pub/8014/issue/8802299/toc](https://ieeexplore.ieee.org/rest/search/pub/8014/issue/8802299/toc). This response is used to identify the journal's documents.
-* As an example, the minimum required POST request headers are:
-    ```
-    Accept: application/json, text/plain, */*
-    Content-Type: application/json
-    Host: ieeexplore.ieee.org
-    Origin: https://ieeexplore.ieee.org
-    Referer: https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=8802299&punumber=8014
-    ```
-    whereas the request payload is:
-    ```json
-    {
-        "isnumber":"8802299",
-        "punumber":"8014",
-        "sortType":"vol-only-seq"
-    }
-    ```
-* [sample_metadata_api_data.json](https://github.com/FongYoong/ieee_journal_downloader/blob/master/misc/sample_metadata_api_data.json) contains a sample response returned by a GET request to [https://ieeexplore.ieee.org/rest/publication/home/metadata?issueid=4381235](https://ieeexplore.ieee.org/rest/publication/home/metadata?issueid=4381235). This metadata is fetched if the user-specified URL does not contain a publication number. The headers should be:
-    ```
-    Accept: application/json, text/plain, */*
-    Content-Type: application/json
-    Host: ieeexplore.ieee.org
-    Origin: https://ieeexplore.ieee.org
-    ```
+---
 
-***
-## Building from source
+## 🛠 Instalasi Dependensi
 
-1. Clone this repository 👪
-    * `git clone https://github.com/FongYoong/ieee_journal_downloader.git`
-2. Install the Rust toolchains (Rustc, Rustup, Cargo).
-    * [Follow instructions here](https://www.rust-lang.org/tools/install).
-3. For Linux systems, install the following:
-    `sudo apt-get install pkg-config libssl-dev libx11-xcb-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-xfixes0-dev`
-4. Move into the cloned repository
-    * `cd ieee_journal_downloader`
-5. Build! 🔨
-    * `cargo build --release`
-    or
-    * `cargo run --release`
+Pastikan Python 3.8+ telah terpasang, lalu instal paket yang dibutuhkan:
+
+```powershell
+pip install requests beautifulsoup4 pypdf pyperclip fake-useragent
+```
+
+---
+
+## 🤝 Kolaborasi & Kredit
+
+* **Arsitektur & Pengembangan Lanjutan:** **Hans x Gravi**
+* **Inspirasi & Upstream Engine Awal:** Menggunakan fondasi mesin IEEE issue downloader dari [FongYoong/ieee_journal_downloader](https://github.com/FongYoong/ieee_journal_downloader).

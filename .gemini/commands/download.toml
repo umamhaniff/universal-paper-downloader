@@ -1,0 +1,5 @@
+description = "Download and compile all articles in an IEEE journal issue"
+prompt = """
+Execute the Python-based IEEE journal downloader. If a URL is passed in {{args}}, pass it directly. Otherwise, run interactively:
+python ieee_downloader.py {{args}}
+"""
