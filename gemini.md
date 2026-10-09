@@ -43,7 +43,11 @@ pdf_output/
 
 ## Quick Usage Guide
 ```powershell
-# --- UNIVERSAL DOWNLOADER (SEMUA JURNAL & PUBLISHER) ---
+# --- CARA 1: INTERACTIVE BATCH UI LAUNCHER (SUPER ENTENG) ---
+# Jalankan file batch UI atau klik shortcut berlogo di Windows Start Menu:
+./Universal_Downloader.bat
+
+# --- CARA 2: CLI DEVELOPER / TERMINAL ---
 # 1. Mode Interaktif (bisa paste clipboard):
 python universal_downloader.py
 
@@ -56,12 +60,10 @@ python universal_downloader.py "https://www.nature.com/articles/s41586-020-2649-
 # 4. Unduh banyak DOI sekaligus dari file teks:
 python universal_downloader.py --file daftar_doi.txt
 
-# --- ONE-CLICK LAUNCHER & START MENU ---
-# Klik shortcut "Universal Paper Downloader" di Windows Start Menu
-# Atau jalankan batch file:
-./run_downloader.bat
+# 5. Unduh 1 Edisi Jurnal Penuh IEEE:
+python universal_downloader.py "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
 ```
 
 ## Git & Repository Status
-- **Origin (Personal):** Siap diarahkan ke akun GitHub pribadi Hans saat hendak di-push.
-- **Upstream (Read-Only Mirror):** `https://github.com/FongYoong/ieee_journal_downloader.git` (khusus memantau update dari pembuat asli tanpa merusak kode lokal).
+- **Origin (Personal GitHub):** `https://github.com/umamhaniff/universal-paper-downloader.git` (Tracking `master`)
+- **Upstream (Read-Only Mirror):** `https://github.com/FongYoong/ieee_journal_downloader.git` (Sumber fondasi awal)

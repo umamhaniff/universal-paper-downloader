@@ -39,17 +39,27 @@ Aplikasi ini juga mempertahankan kapabilitas khusus untuk mengunduh seluruh arti
 
 ## 🚀 Panduan Penggunaan
 
-### 1. One-Click Launcher (Windows)
-Klik ganda berkas **`run_downloader.bat`** atau gunakan shortcut **"Universal Academic Paper Downloader"** di Windows Start Menu.
+Aplikasi ini menyediakan 2 cara penggunaan fleksibel:
 
-### 2. Mode Interaktif CLI
-Jalankan skrip tanpa argumen, kamu bisa mengetikkan DOI/URL atau langsung tekan Enter untuk mengambil isi clipboard:
+### 🌟 Cara 1: Interactive Batch UI Launcher (Rekomendasi - Super Enteng)
+Cukup klik ganda berkas **`Universal_Downloader.bat`** atau klik shortcut berlogo **"Universal Paper Downloader"** di **Windows Start Menu**.
+
+Tampilan antarmuka TUI langsung menyajikan menu navigasi lengkap tanpa beban RAM (0 MB overhead):
+* **[1]** Unduh Paper Satuan (Otomatis deteksi clipboard / input DOI atau URL).
+* **[2]** Unduh 1 Edisi Penuh Jurnal IEEE (Otomatis merge menjadi 1 master PDF).
+* **[3]** Unduh Batch (Daftar DOI massal dari berkas `.txt`).
+* **[4]** Buka folder penyimpanan hasil unduhan PDF di File Explorer.
+* **[5]** Selesai & Keluar.
+
+### 💻 Cara 2: Mode CLI Baris Perintah (Developer / Terminal)
+Jalankan langsung melalui PowerShell atau Command Prompt:
+
+#### A. Mode Interaktif Python
 ```powershell
 python universal_downloader.py
 ```
 
-### 3. Mengunduh via DOI Tunggal
-Mendukung semua format DOI:
+#### B. Mengunduh via DOI Tunggal
 ```powershell
 # Contoh Nature
 python universal_downloader.py "10.1038/s41586-020-2649-2"
@@ -58,22 +68,20 @@ python universal_downloader.py "10.1038/s41586-020-2649-2"
 python universal_downloader.py "10.1016/j.cell.2020.08.024"
 ```
 
-### 4. Mengunduh via URL Halaman Paper
-Salin URL langsung dari browser:
+#### C. Mengunduh via URL Halaman Paper
 ```powershell
 python universal_downloader.py "https://www.nature.com/articles/s41586-020-2649-2"
 ```
 
-### 5. Mengunduh Banyak Paper Sekaligus (Batch Mode)
+#### D. Mengunduh Banyak Paper Sekaligus (Batch Mode)
 Buat berkas teks (misal `daftar_paper.txt`) berisi satu DOI/URL per baris, lalu jalankan:
 ```powershell
 python universal_downloader.py --file daftar_paper.txt
 ```
 
-### 6. Mengunduh 1 Edisi Jurnal IEEE Penuh (Merged PDF)
-Untuk mengunduh satu edisi utuh IEEE:
+#### E. Mengunduh 1 Edisi Jurnal IEEE Penuh (Merged PDF)
 ```powershell
-python ieee_downloader.py "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
+python universal_downloader.py "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
 ```
 
 ---
