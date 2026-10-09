@@ -153,6 +153,7 @@ class UniversalDownloader:
                 if date_parts and date_parts[0]:
                     year = str(date_parts[0])
 
+                resource_url = data.get("resource", {}).get("primary", {}).get("URL", "")
                 return {
                     "doi": doi,
                     "title": title,
@@ -160,6 +161,7 @@ class UniversalDownloader:
                     "publisher": publisher,
                     "authors": authors,
                     "year": year,
+                    "resource_url": resource_url,
                 }
         except Exception:
             pass
@@ -169,6 +171,7 @@ class UniversalDownloader:
             "container": "Academic Publication",
             "authors": [],
             "year": "Unknown",
+            "resource_url": "",
         }
 
     def resolve_unpaywall(self, doi: str) -> tuple[str | None, str | None]:
@@ -226,10 +229,17 @@ class UniversalDownloader:
         return None, None
 
     def resolve_ieee_direct(self, url_or_arnumber: str) -> tuple[str | None, str | None]:
-        """Tier 4: Check IEEE direct stamp resolver if it's an IEEE link."""
-        match = re.search(r"document/(\d+)", url_or_arnumber) or re.search(r"arnumber=(\d+)", url_or_arnumber)
-        if match:
-            arnumber = match.group(1)
+        """Tier 4: Check IEEE direct stamp resolver if it's an IEEE link or arnumber."""
+        val = str(url_or_arnumber).strip()
+        arnumber = None
+        if val.isdigit():
+            arnumber = val
+        else:
+            match = re.search(r"document/(\d+)", val) or re.search(r"arnumber=(\d+)", val)
+            if match:
+                arnumber = match.group(1)
+
+        if arnumber:
             stamp_url = f"https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber={arnumber}"
             headers = {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -569,6 +579,10 @@ class UniversalDownloader:
         metadata = {}
         if doi:
             metadata = self.fetch_crossref_metadata(doi)
+            if not ieee_arnumber and metadata.get("resource_url"):
+                match = re.search(r"document/(\d+)", metadata["resource_url"])
+                if match:
+                    ieee_arnumber = match.group(1)
         elif ieee_arnumber:
             try:
                 from ieee_downloader import IEEEDownloader
@@ -686,18 +700,28 @@ class UniversalDownloader:
                 print("│ [-] Tier 3: Semantic Scholar Open Access  ──► Tidak ada file OA    │")
 
         # Tier 4: IEEE Stamp
-        if not success and ("ieeexplore" in input_query or ieee_arnumber):
-            cand_url, cand_label = self.resolve_ieee_direct(input_query or ieee_arnumber)
-            if cand_url:
-                print("│ [✓] Tier 4: IEEE Open-Access Stamp        ──► DITEMUKAN!           │")
-                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
-                if self.stream_download(cand_url, dest_file, referer="https://ieeexplore.ieee.org/"):
-                    success = True
-                    source_label = cand_label
+        is_ieee = bool(
+            ieee_arnumber
+            or "ieeexplore" in input_query.lower()
+            or (doi and doi.startswith("10.1109/"))
+            or ("ieee" in metadata.get("publisher", "").lower())
+        )
+        if not success:
+            if is_ieee:
+                target_ieee = ieee_arnumber or input_query
+                cand_url, cand_label = self.resolve_ieee_direct(target_ieee)
+                if cand_url:
+                    print("│ [✓] Tier 4: IEEE Open-Access Stamp        ──► DITEMUKAN!           │")
+                    print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                    if self.stream_download(cand_url, dest_file, referer="https://ieeexplore.ieee.org/"):
+                        success = True
+                        source_label = cand_label
+                    else:
+                        print("│     • Paper berstatus terkunci. Melanjutkan cascade...               │")
                 else:
-                    print("│     • Paper berstatus terkunci. Melanjutkan cascade...               │")
+                    print("│ [-] Tier 4: IEEE Open-Access Stamp        ──► Paper Berstatus Terkunci │")
             else:
-                print("│ [-] Tier 4: IEEE Open-Access Stamp        ──► Paper Berstatus Terkunci │")
+                print("│ [-] Tier 4: IEEE Open-Access Stamp        ──► Dilewati (Bukan IEEE)    │")
 
         # Tier 5: Sci-Hub Multi-Mirror
         if not success and doi:
