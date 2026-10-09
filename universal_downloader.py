@@ -35,6 +35,9 @@ import argparse
 import warnings
 from pathlib import Path
 from urllib.parse import urlparse, unquote
+import urllib.request
+
+
 
 warnings.filterwarnings("ignore")
 
@@ -55,11 +58,21 @@ DEFAULT_USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
-SCIHUB_MIRRORS = [
+# Default pool of known Sci-Hub mirrors. Can be augmented via SCIHUB_MIRRORS env var.
+DEFAULT_SCIHUB_MIRRORS = [
     "https://sci-hub.ru",
+    "https://sci-hub.su",
+    "https://sci-hub.wf",
+    "https://sci-hub.ren",
     "https://sci-hub.st",
-    "https://sci-hub.se",
 ]
+
+# Encrypted DoH endpoints (port 443 HTTPS) for bypass against ISP DNS tampering / poisoning
+DOH_RESOLVER_ENDPOINTS = [
+    ("https://1.1.1.1/dns-query", {"accept": "application/dns-json"}, "Cloudflare DoH"),
+    ("https://8.8.8.8/resolve", {}, "Google DoH"),
+]
+
 
 
 class UniversalDownloader:
@@ -216,50 +229,162 @@ class UniversalDownloader:
                 pass
         return None, None
 
+    def resolve_doh(self, hostname: str) -> list[str]:
+        """
+        In-memory DoH (DNS-over-HTTPS) resolution.
+        Bypasses ISP DNS hijacking / Internet Positif blocks for academic mirrors
+        using Cloudflare (1.1.1.1) and Google (8.8.8.8) encrypted endpoints.
+        Zero OS changes: Operates strictly in process memory and automatically disappears when closed.
+        """
+        for doh_url, headers, provider in DOH_RESOLVER_ENDPOINTS:
+            try:
+                full_url = f"{doh_url}?name={hostname}&type=A"
+                req = urllib.request.Request(full_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=4) as response:
+                    data = json.loads(response.read().decode("utf-8", errors="replace"))
+                    answers = data.get("Answer", [])
+                    ips = [a.get("data") for a in answers if a.get("type") == 1 and a.get("data")]
+                    if ips:
+                        return ips
+            except Exception:
+                continue
+        return []
+
+    def get_active_scihub_mirrors(self) -> list[str]:
+        """
+        Retrieves pool of Sci-Hub mirrors, combining user environment overrides (SCIHUB_MIRRORS)
+        with the built-in healthy mirrors pool for long-term future-proofing.
+        """
+        env_custom = os.environ.get("SCIHUB_MIRRORS")
+        mirrors = []
+        if env_custom:
+            for m in env_custom.split(","):
+                m = m.strip()
+                if m:
+                    if not m.startswith("http"):
+                        m = f"https://{m}"
+                    mirrors.append(m.rstrip("/"))
+
+        for m in DEFAULT_SCIHUB_MIRRORS:
+            if m not in mirrors:
+                mirrors.append(m)
+        return mirrors
+
+    def request_with_doh_fallback(self, url: str, headers: dict | None = None, timeout: int = 10) -> requests.Response | None:
+        """
+        Performs an HTTP GET request with automatic DoH fallback.
+        If system DNS fails (e.g. ISP blocks or poisoning), resolves via DoH
+        without ever modifying Windows host network configuration.
+        """
+        req_headers = dict(self.session.headers)
+        if headers:
+            req_headers.update(headers)
+
+        # 1. Attempt standard request via session
+        try:
+            res = self.session.get(url, headers=req_headers, timeout=timeout)
+            if res.status_code == 200:
+                return res
+        except (requests.exceptions.ConnectionError, requests.exceptions.SSLError, requests.exceptions.Timeout):
+            pass
+        except Exception:
+            pass
+
+        # 2. In-App DoH Fallback if standard request failed
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return None
+
+        doh_ips = self.resolve_doh(hostname)
+        if not doh_ips:
+            return None
+
+        # Try connecting with DoH-resolved IP addresses
+        import socket
+        orig_getaddrinfo = socket.getaddrinfo
+
+        for ip in doh_ips:
+            def custom_getaddrinfo(host, port, *args, **kwargs):
+                if host == hostname:
+                    return orig_getaddrinfo(ip, port, *args, **kwargs)
+                return orig_getaddrinfo(host, port, *args, **kwargs)
+
+            try:
+                socket.getaddrinfo = custom_getaddrinfo
+                res = self.session.get(url, headers=req_headers, timeout=timeout)
+                if res.status_code == 200:
+                    return res
+            except Exception:
+                continue
+            finally:
+                socket.getaddrinfo = orig_getaddrinfo
+
+        return None
+
     def resolve_scihub(self, doi: str) -> tuple[str | None, str | None, str | None]:
         """
-        Tier 5: Sci-Hub Multi-Mirror resolution.
+        Tier 5: Sci-Hub Multi-Mirror resolution with In-App DoH bypass & future-proof mirror pool.
         Returns (pdf_url, source_label, referer_to_use).
         """
-        for mirror in SCIHUB_MIRRORS:
+        mirrors = self.get_active_scihub_mirrors()
+        for mirror in mirrors:
             target_url = f"{mirror}/{doi}"
             try:
-                res = self.session.get(target_url, timeout=10)
-                if res.status_code == 200:
-                    soup = BeautifulSoup(res.text, "html.parser")
+                res = self.request_with_doh_fallback(target_url, timeout=10)
+                if not res or res.status_code != 200:
+                    continue
 
-                    meta_pdf = soup.find("meta", attrs={"name": "citation_pdf_url"})
-                    if meta_pdf and meta_pdf.get("content"):
-                        src = meta_pdf["content"]
+                html = res.text
+                soup = BeautifulSoup(html, "html.parser")
+
+                # Pattern A: <meta name="citation_pdf_url" content="...">
+                meta_pdf = soup.find("meta", attrs={"name": "citation_pdf_url"})
+                if meta_pdf and meta_pdf.get("content"):
+                    src = meta_pdf["content"]
+                    if src.startswith("//"):
+                        src = "https:" + src
+                    elif src.startswith("/"):
+                        src = mirror + src
+                    return src, f"Sci-Hub ({mirror}) [DoH-Ready]", target_url
+
+                # Pattern B: <embed> or <iframe> with src
+                embed = soup.find(["embed", "iframe"], attrs={"src": True})
+                if embed and embed.get("src"):
+                    src = embed["src"].split("#")[0]  # Strip viewer params like #view=FitH
+                    if src.startswith("//"):
+                        src = "https:" + src
+                    elif src.startswith("/"):
+                        src = mirror + src
+                    return src, f"Sci-Hub ({mirror}) [DoH-Ready]", target_url
+
+                # Pattern C: location.href redirect in button or script
+                btn = soup.find(lambda el: el.name in ["button", "a"] and el.get("onclick") and "location.href" in el.get("onclick"))
+                if btn:
+                    match = re.search(r"location\.href\s*=\s*['\"]([^'\"]+)['\"]", btn["onclick"])
+                    if match:
+                        src = match.group(1).split("#")[0]
                         if src.startswith("//"):
                             src = "https:" + src
                         elif src.startswith("/"):
                             src = mirror + src
-                        return src, f"Sci-Hub ({mirror})", target_url
+                        return src, f"Sci-Hub ({mirror}) [DoH-Ready]", target_url
 
-                    embed = soup.find(["embed", "iframe"], attrs={"src": True})
-                    if embed:
-                        src = embed["src"]
-                        if src.startswith("//"):
-                            src = "https:" + src
-                        elif src.startswith("/"):
-                            src = mirror + src
-                        return src, f"Sci-Hub ({mirror})", target_url
+                # Pattern D: Direct regex search for /storage/... PDF paths
+                storage_match = re.search(r"['\"](/storage/[^'\"]+\.pdf(?:#[^'\"]*)?)['\"]", html)
+                if storage_match:
+                    src = storage_match.group(1).split("#")[0]
+                    if src.startswith("//"):
+                        src = "https:" + src
+                    elif src.startswith("/"):
+                        src = mirror + src
+                    return src, f"Sci-Hub ({mirror}) [DoH-Ready]", target_url
 
-                    btn = soup.find(lambda el: el.name in ["button", "a"] and el.get("onclick") and "location.href" in el.get("onclick"))
-                    if btn:
-                        match = re.search(r"location\.href\s*=\s*['\"]([^'\"]+)['\"]", btn["onclick"])
-                        if match:
-                            src = match.group(1)
-                            if src.startswith("//"):
-                                src = "https:" + src
-                            elif src.startswith("/"):
-                                src = mirror + src
-                            return src, f"Sci-Hub ({mirror})", target_url
             except Exception:
                 continue
 
         return None, None, None
+
 
     def stream_download(self, url: str, dest_path: Path, referer: str | None = None) -> bool:
         """
@@ -273,29 +398,60 @@ class UniversalDownloader:
         safe_dest = self.to_long_path_safe(dest_path)
         safe_dest.parent.mkdir(parents=True, exist_ok=True)
 
-        try:
+        def _do_stream():
             with self.session.get(url, headers=headers, stream=True, timeout=30) as r:
                 if r.status_code != 200:
                     return False
-
                 chunk_gen = r.iter_content(chunk_size=65536)
                 first_chunk = next(chunk_gen, None)
                 if not first_chunk or not first_chunk.startswith(b"%PDF"):
                     return False
-
                 with open(safe_dest, "wb") as f:
                     f.write(first_chunk)
                     for chunk in chunk_gen:
                         if chunk:
                             f.write(chunk)
             return True
+
+        # Try normal download
+        try:
+            if _do_stream():
+                return True
+        except (requests.exceptions.ConnectionError, requests.exceptions.SSLError, requests.exceptions.Timeout):
+            pass
         except Exception:
-            if safe_dest.exists():
-                try:
-                    safe_dest.unlink()
-                except OSError:
-                    pass
-            return False
+            pass
+
+        # If failed, attempt stream download with DoH IP resolution
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if hostname:
+            doh_ips = self.resolve_doh(hostname)
+            if doh_ips:
+                import socket
+                orig_getaddrinfo = socket.getaddrinfo
+                for ip in doh_ips:
+                    def custom_getaddrinfo(host, port, *args, **kwargs):
+                        if host == hostname:
+                            return orig_getaddrinfo(ip, port, *args, **kwargs)
+                        return orig_getaddrinfo(host, port, *args, **kwargs)
+
+                    try:
+                        socket.getaddrinfo = custom_getaddrinfo
+                        if _do_stream():
+                            return True
+                    except Exception:
+                        continue
+                    finally:
+                        socket.getaddrinfo = orig_getaddrinfo
+
+        if safe_dest.exists():
+            try:
+                safe_dest.unlink()
+            except OSError:
+                pass
+        return False
+
 
     def download_paper(self, input_query: str, output_base: str = "pdf_output") -> bool:
         """

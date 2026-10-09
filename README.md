@@ -225,6 +225,19 @@ Target DOI / URL
 [Hasil: Panduan Legal Request via ResearchGate / SSO Kampus]
 ```
 
+## 🛡️ In-App Encrypted DNS (DoH) & Mirror Future-Proofing
+
+Proyek ini dilengkapi dengan modul **In-App DNS-over-HTTPS (DoH)** bawaan yang beroperasi secara *in-memory runtime*:
+
+* **Bypass Sensor ISP Otomatis (Zero Setup):** Jika ISP lokal (Indihome, Telkomsel, FirstMedia, dll.) melakukan DNS hijacking / pemblokiran terhadap domain repositori akademik seperti Sci-Hub, sistem secara otomatis melakukan resolusi IP terenkripsi via **Cloudflare DoH (`1.1.1.1`)** dan **Google DoH (`8.8.8.8`)** melalui port HTTPS 443.
+* **Zero System Impact:** **SAMA SEKALI TIDAK** mengubah setting jaringan Windows/OS. Begitu aplikasi ditutup, tidak ada konfigurasi atau cache DNS yang tersisa pada komputer pengguna.
+* **Future-Proof Mirror Pool:** Mirror Sci-Hub dinamis dan dapat berubah sewaktu-waktu. Program memiliki pool bawaan (`.ru`, `.su`, `.wf`, `.ren`, `.st`) dan mendukung custom mirror melalui environment variable:
+  ```powershell
+  # Menambahkan mirror kustom baru tanpa mengubah kode:
+  $env:SCIHUB_MIRRORS="https://sci-hub.se,https://sci-hub.is"
+  uv run universal_downloader.py "10.xxxx/..."
+  ```
+
 ---
 
 ## 💾 Optimasi Memori & RAM (Strict 8GB)

@@ -14,9 +14,11 @@ Proyek ini berevolusi dari sekadar pengunduh jurnal IEEE menjadi **Universal Pap
      - **Tier 2:** OpenAlex Global Scholarly Index (OA URLs & Publisher Direct)
      - **Tier 3:** Semantic Scholar API (Open Access PDFs)
      - **Tier 4:** IEEE Open Access Stamp Resolver
-     - **Tier 5:** Sci-Hub Multi-Mirror (`.ru`, `.st`, `.se`) untuk paper terkunci paywall
+     - **Tier 5:** Sci-Hub Multi-Mirror (`.ru`, `.su`, `.wf`, `.ren`, `.st`) dengan **In-App Encrypted DoH (1.1.1.1 / 8.8.8.8)** bypass untuk sensor ISP tanpa modifikasi OS.
+   - **Anti-Censorship & Future-Proofing:** In-App DoH socket fallback otomatis saat ISP memblokir domain mirror, serta dukungan konfigurasi pool mirror dinamis via environment variable (`SCIHUB_MIRRORS`).
    - **Visual Output Pipeline:** Memiliki pembatas kotak visual terpisah (Metadata $\rightarrow$ Cascade Check $\rightarrow$ Disk Streaming Chunk $\rightarrow$ Hasil Akhir) serta menu tindakan interaktif pasca-unduh agar sesi tidak tertutup sepihak.
-2. **IEEE Issue Engine:** [ieee_downloader.py](file:///D:/_CampusLife/ProjectLikely/ieee_journal_downloader/ieee_downloader.py)
+2. **IEEE Issue Engine:** [ieee_downloader.py](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/ieee_downloader.py)
+
    - Spesialisasi mengunduh seluruh artikel pada edisi/isu jurnal IEEE (`isnumber` & `punumber`) dan menggabungkannya secara sequential ke dalam PDF master (`Volume_X_Issue_Y.pdf`).
 
 ## UI & Pemasangan
