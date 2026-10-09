@@ -6,7 +6,7 @@ Built by **Hans x Gravi**
 Proyek ini berevolusi dari sekadar pengunduh jurnal IEEE menjadi **Universal Paper Downloader** dengan arsitektur *Waterfall Cascade Resolution*. Mampu mengunduh dokumen ilmiah dari penerbit mana pun (**Nature, Springer, Elsevier / ScienceDirect, IEEE, Wiley, ACM, Taylor & Francis, PubMed, dll.**) berdasarkan nomor DOI atau tautan URL, sekaligus mengunduh seluruh volume/edisi jurnal IEEE dan menggabungkannya ke dalam satu PDF master.
 
 ## Core Engines & Runtime
-1. **Universal DOI & Paper Downloader:** [universal_downloader.py](file:///D:/_CampusLife/ProjectLikely/ieee_journal_downloader/universal_downloader.py)
+1. **Universal DOI & Paper Downloader:** [universal_downloader.py](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/universal_downloader.py)
    - **Standar Eksekusi:** Didukung penuh oleh **Astral `uv`** via standar **PEP 723 (Inline Script Metadata)**.
    - **Input:** DOI apa saja (`10.xxxx/...`), tautan paper dari berbagai publisher, tautan issue IEEE, atau mode batch teks.
    - **Cascade Pipeline:**
@@ -18,19 +18,19 @@ Proyek ini berevolusi dari sekadar pengunduh jurnal IEEE menjadi **Universal Pap
    - **Anti-Censorship & Future-Proofing:** In-App DoH socket fallback otomatis saat ISP memblokir domain mirror, serta dukungan konfigurasi pool mirror dinamis via environment variable (`SCIHUB_MIRRORS`).
    - **Visual Output Pipeline:** Memiliki pembatas kotak visual terpisah (Metadata $\rightarrow$ Cascade Check $\rightarrow$ Disk Streaming Chunk $\rightarrow$ Hasil Akhir) serta menu tindakan interaktif pasca-unduh agar sesi tidak tertutup sepihak.
 2. **IEEE Issue Engine:** [ieee_downloader.py](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/ieee_downloader.py)
-
    - Spesialisasi mengunduh seluruh artikel pada edisi/isu jurnal IEEE (`isnumber` & `punumber`) dan menggabungkannya secara sequential ke dalam PDF master (`Volume_X_Issue_Y.pdf`).
 
 ## UI & Pemasangan
-- **Interactive Batch TUI Launcher:** [`Universal_Downloader.bat`](file:///D:/_CampusLife/ProjectLikely/ieee_journal_downloader/Universal_Downloader.bat)
+- **Interactive Batch TUI Launcher:** [`Universal_Downloader.bat`](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/Universal_Downloader.bat)
   - Otomatis mendeteksi keberadaan `uv` (Astral Rust Runner) untuk eksekusi kilat (~200ms) dengan fallback ke `python`.
   - RAM overhead 0 MB (ideal untuk limit memori 8GB).
-- **Shortcut Installer 1-Klik:** [`install_shortcut.bat`](file:///D:/_CampusLife/ProjectLikely/ieee_journal_downloader/install_shortcut.bat)
+- **Shortcut Installer 1-Klik:** [`install_shortcut.bat`](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/install_shortcut.bat)
   - Memasang pintasan berlogo resmi di Windows Start Menu.
-- **Aset & Identitas Visual:** Folder [`assets/`](file:///D:/_CampusLife/ProjectLikely/ieee_journal_downloader/assets/)
+- **Aset & Identitas Visual:** Folder [`assets/`](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/assets/)
   - `logo.png`: High-res 512x512 PNG 3D Hardcover Academic Tome.
   - `app_icon.ico`: Multi-resolusi (256 s/d 16 px) untuk icon Windows.
   - `generate_icon.py`: Generator aset visual matematis berbasis Pillow.
+
 
 ## RAM & Performance Optimization (Strict 8GB RAM Constraint)
 - Streaming via `requests.get(..., stream=True)` dengan chunk 64KB langsung ke disk tanpa penumpukan memori.
