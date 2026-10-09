@@ -60,11 +60,11 @@ DEFAULT_USER_AGENT = (
 
 # Default pool of known Sci-Hub mirrors. Can be augmented via SCIHUB_MIRRORS env var.
 DEFAULT_SCIHUB_MIRRORS = [
+    "https://sci-hub.ren",
     "https://sci-hub.ru",
     "https://sci-hub.su",
-    "https://sci-hub.wf",
-    "https://sci-hub.ren",
     "https://sci-hub.st",
+    "https://sci-hub.wf",
 ]
 
 # Encrypted DoH endpoints (port 443 HTTPS) for bypass against ISP DNS tampering / poisoning
@@ -203,7 +203,10 @@ class UniversalDownloader:
                 data = res.json()
                 oa_pdf = data.get("openAccessPdf")
                 if oa_pdf and oa_pdf.get("url"):
-                    return oa_pdf.get("url"), "Semantic Scholar OA"
+                    cand = oa_pdf.get("url")
+                    # Ignore pure DOI landing page URLs (usually bronze publisher paywalls)
+                    if "doi.org/" not in cand.lower():
+                        return cand, "Semantic Scholar OA"
         except Exception:
             pass
         return None, None
@@ -336,6 +339,9 @@ class UniversalDownloader:
                     continue
 
                 html = res.text
+                if "робота" in html or "altcha" in html.lower():
+                    continue
+
                 soup = BeautifulSoup(html, "html.parser")
 
                 # Pattern A: <meta name="citation_pdf_url" content="...">
@@ -384,6 +390,60 @@ class UniversalDownloader:
                 continue
 
         return None, None, None
+
+    def download_from_scihub_cascade(self, doi: str, dest_file: Path) -> str | None:
+        """
+        Iterates through active Sci-Hub mirrors, extracting candidate PDF URLs and
+        immediately streaming to disk with Referer headers to bypass hotlink protection.
+        Skips mirrors returning captcha challenges or broken storage links.
+        Returns the source label on success, or None.
+        """
+        mirrors = self.get_active_scihub_mirrors()
+        for mirror in mirrors:
+            target_url = f"{mirror}/{doi}"
+            try:
+                res = self.request_with_doh_fallback(target_url, timeout=10)
+                if not res or res.status_code != 200:
+                    continue
+
+                html = res.text
+                if "робота" in html or "altcha" in html.lower():
+                    continue
+
+                soup = BeautifulSoup(html, "html.parser")
+                candidates = []
+
+                meta_pdf = soup.find("meta", attrs={"name": "citation_pdf_url"})
+                if meta_pdf and meta_pdf.get("content"):
+                    candidates.append(meta_pdf["content"])
+
+                embed = soup.find(["embed", "iframe"], attrs={"src": True})
+                if embed and embed.get("src"):
+                    candidates.append(embed["src"].split("#")[0])
+
+                btn = soup.find(lambda el: el.name in ["button", "a"] and el.get("onclick") and "location.href" in el.get("onclick"))
+                if btn:
+                    m = re.search(r"location\.href\s*=\s*['\"]([^'\"]+)['\"]", btn["onclick"])
+                    if m:
+                        candidates.append(m.group(1).split("#")[0])
+
+                for storage_match in re.findall(r"['\"](/storage/[^'\"]+\.pdf(?:#[^'\"]*)?)['\"]", html):
+                    candidates.append(storage_match.split("#")[0])
+
+                for raw_src in candidates:
+                    src = raw_src.strip()
+                    if src.startswith("//"):
+                        src = "https:" + src
+                    elif src.startswith("/"):
+                        src = mirror + src
+
+                    if self.stream_download(src, dest_file, referer=target_url):
+                        return f"Sci-Hub ({mirror}) [DoH-Ready]"
+
+            except Exception:
+                continue
+
+        return None
 
 
     def stream_download(self, url: str, dest_path: Path, referer: str | None = None) -> bool:
@@ -554,81 +614,104 @@ class UniversalDownloader:
             return True
 
         # -------------------------------------------------------------
-        # SECTION 2: CASCADE RESOLUTION PIPELINE (TIER CHECKING)
+        # SECTION 2: CASCADE RESOLUTION PIPELINE (TIER CHECKING & STREAM)
         # -------------------------------------------------------------
         print("\n" + "┌" + "─" * 70 + "┐")
         print("│ 🔍 2. WATERFALL CASCADE RESOLUTION (Pengecekan Multi-Sumber)       │")
         print("├" + "─" * 70 + "┤")
 
-        pdf_url = None
+        success = False
         source_label = None
-        referer = None
 
         # Tier 1: Unpaywall
         if doi:
-            pdf_url, source_label = self.resolve_unpaywall(doi)
-            if pdf_url:
+            cand_url, cand_label = self.resolve_unpaywall(doi)
+            if cand_url:
                 print("│ [✓] Tier 1: Unpaywall (Legal Open Access) ──► DITEMUKAN!           │")
+                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                if self.stream_download(cand_url, dest_file):
+                    success = True
+                    source_label = cand_label
+                else:
+                    print("│     • Link bukan berkas PDF valid. Melanjutkan cascade...            │")
             else:
                 print("│ [-] Tier 1: Unpaywall (Legal Open Access) ──► Tidak ada file OA    │")
 
         # Tier 2: OpenAlex
-        if not pdf_url and doi:
-            pdf_url, source_label = self.resolve_openalex(doi)
-            if pdf_url:
+        if not success and doi:
+            cand_url, cand_label = self.resolve_openalex(doi)
+            if cand_url:
                 print("│ [✓] Tier 2: OpenAlex Global Index         ──► DITEMUKAN!           │")
+                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                if self.stream_download(cand_url, dest_file):
+                    success = True
+                    source_label = cand_label
+                else:
+                    print("│     • Link bukan berkas PDF valid. Melanjutkan cascade...            │")
             else:
                 print("│ [-] Tier 2: OpenAlex Global Index         ──► Tidak ada file OA    │")
 
         # Tier 3: Semantic Scholar
-        if not pdf_url and doi:
-            pdf_url, source_label = self.resolve_semanticscholar(doi)
-            if pdf_url:
+        if not success and doi:
+            cand_url, cand_label = self.resolve_semanticscholar(doi)
+            if cand_url:
                 print("│ [✓] Tier 3: Semantic Scholar Open Access  ──► DITEMUKAN!           │")
+                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                if self.stream_download(cand_url, dest_file):
+                    success = True
+                    source_label = cand_label
+                else:
+                    print("│     • Link bukan berkas PDF valid. Melanjutkan cascade...            │")
             else:
                 print("│ [-] Tier 3: Semantic Scholar Open Access  ──► Tidak ada file OA    │")
 
         # Tier 4: IEEE Stamp
-        if not pdf_url and ("ieeexplore" in input_query or ieee_arnumber):
-            pdf_url, source_label = self.resolve_ieee_direct(input_query or ieee_arnumber)
-            referer = "https://ieeexplore.ieee.org/"
-            if pdf_url:
+        if not success and ("ieeexplore" in input_query or ieee_arnumber):
+            cand_url, cand_label = self.resolve_ieee_direct(input_query or ieee_arnumber)
+            if cand_url:
                 print("│ [✓] Tier 4: IEEE Open-Access Stamp        ──► DITEMUKAN!           │")
+                print("│     • Mengunduh & memvalidasi integritas (%PDF)...                   │")
+                if self.stream_download(cand_url, dest_file, referer="https://ieeexplore.ieee.org/"):
+                    success = True
+                    source_label = cand_label
+                else:
+                    print("│     • Paper berstatus terkunci. Melanjutkan cascade...               │")
             else:
                 print("│ [-] Tier 4: IEEE Open-Access Stamp        ──► Paper Berstatus Terkunci │")
 
         # Tier 5: Sci-Hub Multi-Mirror
-        if not pdf_url and doi:
-            pdf_url, source_label, referer = self.resolve_scihub(doi)
-            if pdf_url:
-                print("│ [✓] Tier 5: Sci-Hub Multi-Mirror Archive  ──► DITEMUKAN!           │")
+        if not success and doi:
+            print("│ [*] Tier 5: Sci-Hub Multi-Mirror Archive  ──► Memeriksa Mirror Pool...│")
+            scihub_label = self.download_from_scihub_cascade(doi, dest_file)
+            if scihub_label:
+                print("│ [✓] Tier 5: Sci-Hub Multi-Mirror Archive  ──► DITEMUKAN & VALID!   │")
+                success = True
+                source_label = scihub_label
             else:
-                print("│ [-] Tier 5: Sci-Hub Multi-Mirror Archive  ──► Belum Terarsip       │")
+                print("│ [-] Tier 5: Sci-Hub Multi-Mirror Archive  ──► Seluruh Mirror Gagal │")
 
         print("├" + "─" * 70 + "┤")
-        if pdf_url:
+        if success:
             print(f"│ 🎯 Sumber Terpilih: {source_label[:49]:<49}│")
         else:
-            print("│ ⚠️ Status: Seluruh 5 Tier tidak menemukan file Open Access          │")
+            print("│ ⚠️ Status: Seluruh 5 Tier tidak dapat mengunduh berkas PDF utuh    │")
         print("└" + "─" * 70 + "┘")
 
         # -------------------------------------------------------------
-        # SECTION 3: DOWNLOAD EXECUTION WITH DEDICATED DIVIDER
+        # SECTION 3: DOWNLOAD EXECUTION SUMMARY
         # -------------------------------------------------------------
-        success = False
-        if pdf_url:
-            print("\n" + "┌" + "─" * 70 + "┐")
-            print("│ ⬇️ 3. PROSES PENGUNDUHAN BERKAS                                      │")
-            print("├" + "─" * 70 + "┤")
-            print(f"│ • Menghubungi endpoint penyedia PDF...                               │")
+        print("\n" + "┌" + "─" * 70 + "┐")
+        print("│ ⬇️ 3. PROSES PENGUNDUHAN BERKAS                                      │")
+        print("├" + "─" * 70 + "┤")
+        if success:
+            print(f"│ • Menghubungi endpoint penyedia PDF... ──► OK!                      │")
             print(f"│ • Sumber Terpilih : {source_label[:48]:<48} │")
             print("│ • Mengalirkan data langsung ke disk (chunk 64KB, RAM-friendly)...   │")
-            success = self.stream_download(pdf_url, dest_file, referer=referer)
-            if success:
-                print("│ • Memverifikasi integritas format (%PDF magic bytes) ──► VALID!      │")
-            else:
-                print("│ • Verifikasi berkas ──► GAGAL / KORUP                                │")
-            print("└" + "─" * 70 + "┘")
+            print("│ • Memverifikasi integritas format (%PDF magic bytes) ──► VALID!      │")
+        else:
+            print("│ • Status : Berkas tidak tersedia atau terkunci di semua tier.        │")
+            print("│ • Verifikasi berkas ──► GAGAL / KORUP                                │")
+        print("└" + "─" * 70 + "┘")
 
         # -------------------------------------------------------------
         # SECTION 4: FINAL OUTPUT BOX
