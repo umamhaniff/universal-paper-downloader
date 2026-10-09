@@ -49,12 +49,16 @@ Aplikasi ini juga mempertahankan kapabilitas khusus untuk mengunduh seluruh arti
 ## 🛠 Panduan Instalasi (Step-by-Step)
 
 ### 1. Prasyarat Sistem
+
 Pastikan perangkat Anda sudah terpasang:
+
 * **[uv](https://astral.sh/uv) (Sangat Disarankan)** atau **Python 3.8+** ([Unduh Python](https://www.python.org/downloads/)).
 * **Git** (Opsional, untuk clone repositori).
 
 ### 2. Unduh / Clone Repositori
+
 Buka terminal (PowerShell atau Command Prompt), lalu jalankan:
+
 ```powershell
 git clone https://github.com/umamhaniff/universal-paper-downloader.git
 cd universal-paper-downloader
@@ -63,24 +67,31 @@ cd universal-paper-downloader
 ### 3. Instal Dependensi
 
 #### ⚡ Opsi A: Menggunakan `uv` (Super Cepat ~200ms & Direkomendasikan)
+
 Skrip ini sudah mendukung standar **PEP 723 (Inline Script Metadata)**. Anda bahkan **tidak perlu menginstal paket manual**! Cukup jalankan langsung:
+
 ```powershell
 uv run universal_downloader.py
 ```
+
 *(Atau jika ingin menginstal ke virtual environment: `uv pip install -r requirements.txt`)*
 
 #### 🐍 Opsi B: Menggunakan Standard `pip`
+
 ```powershell
 pip install -r requirements.txt
 ```
 
 ### 4. Pasang Shortcut Windows Start Menu (Opsional / 1-Klik)
+
 Untuk memasang pintasan aplikasi berlogo resmi 3D Hardcover Tome di Windows Start Menu:
+
 * Klik ganda berkas **`install_shortcut.bat`**, atau
 * Jalankan di terminal:
   ```powershell
   ./install_shortcut.bat
   ```
+
 Setelah ini, Anda cukup menekan tombol **Windows** di keyboard lalu ketik **"Universal Paper Downloader"** untuk membuka aplikasi kapan saja!
 
 ---
@@ -90,12 +101,14 @@ Setelah ini, Anda cukup menekan tombol **Windows** di keyboard lalu ketik **"Uni
 Aplikasi ini menyediakan **2 cara penggunaan** sesuai kenyamanan Anda:
 
 ### 🌟 Cara 1: Interactive Batch UI Launcher (Rekomendasi - Super Enteng)
+
 Cukup klik ganda berkas **`Universal_Downloader.bat`** atau klik shortcut di **Windows Start Menu**.
 
 Tampilan antarmuka TUI langsung menyajikan menu navigasi lengkap tanpa beban RAM (0 MB overhead):
+
 ```text
 ======================================================================
-             UNIVERSAL PAPER DOWNLOADER (Hans x Gravi)                
+             UNIVERSAL PAPER DOWNLOADER (Hans x Gravi)              
 ======================================================================
   Engine: 5-Tier Waterfall | Cross-Publisher | Strict 8GB RAM Optimized
 ======================================================================
@@ -119,14 +132,17 @@ Pilih menu (1-5) [Default: 1] >
 ---
 
 ### 💻 Cara 2: Mode CLI Baris Perintah (Developer / Terminal)
+
 Bagi pengguna terminal, Anda dapat memanggil mesin Python secara langsung dengan parameter baris perintah:
 
 #### A. Mode Interaktif CLI
+
 ```powershell
 python universal_downloader.py
 ```
 
 #### B. Mengunduh via DOI Tunggal
+
 ```powershell
 # Contoh Artikel Nature
 python universal_downloader.py "10.1038/s41586-020-2649-2"
@@ -139,18 +155,23 @@ python universal_downloader.py "10.1109/TPAMI.2020.3012548"
 ```
 
 #### C. Mengunduh via URL Halaman Paper
+
 Salin URL langsung dari bilah alamat browser:
+
 ```powershell
 python universal_downloader.py "https://www.nature.com/articles/s41586-020-2649-2"
 ```
 
 #### D. Mengunduh Batch dari Berkas Teks
+
 Buat berkas teks (misal `daftar_paper.txt`) berisi satu DOI/URL per baris, lalu jalankan:
+
 ```powershell
 python universal_downloader.py --file daftar_paper.txt
 ```
 
 #### E. Mengunduh 1 Edisi Jurnal IEEE Penuh (Merged Master PDF)
+
 ```powershell
 python universal_downloader.py "https://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=9340528&punumber=8475037"
 ```
@@ -207,6 +228,7 @@ Target DOI / URL
 ---
 
 ## 💾 Optimasi Memori & RAM (Strict 8GB)
+
 * **Streaming Chunks:** Pengunduhan file tidak pernah memuat seluruh berkas PDF ke dalam RAM sekaligus, melainkan dialirkan per chunk 64KB langsung ke disk (`requests.get(..., stream=True)`).
 * **Verifikasi Magic Bytes:** Header berkas divalidasi memastikan berawalan byte `%PDF` sebelum disimpan permanen.
 * **Sequential Merger:** Penggabungan issue PDF multi-artikel menggunakan alur sekuensial hemat memori.
