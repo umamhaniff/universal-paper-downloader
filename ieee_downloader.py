@@ -8,8 +8,19 @@ Supports:
 2. Single Article downloads (via /document/arnumber link) with direct IEEE open-access
    and multi-mirror Sci-Hub resolution.
 """
+# /// script
+# requires-python = ">=3.8"
+# dependencies = [
+#     "requests>=2.28.0",
+#     "beautifulsoup4>=4.11.0",
+#     "pypdf>=3.0.0",
+#     "tqdm>=4.64.0",
+# ]
+# ///
 
 import os
+
+
 import sys
 import re
 import time
