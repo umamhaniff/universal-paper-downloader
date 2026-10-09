@@ -5,22 +5,31 @@ title Universal Paper Downloader - Hans x Gravi
 :: Pastikan berjalan di folder skrip berada
 cd /d "%~dp0"
 
-:: Cek apakah Python terpasang di sistem
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo.
-    echo ======================================================================
-    echo  [!] PERINGATAN: Python tidak ditemukan di PATH sistem!
-    echo  Silakan instal Python 3.8+ dari https://www.python.org/downloads/
-    echo ======================================================================
-    echo.
-    pause
-    exit /b 1
+:: Cek runtime executor (Prioritaskan uv jika tersedia, fallback ke python)
+uv --version >nul 2>&1
+if not errorlevel 1 (
+    set "RUNNER=uv run"
+    set "RUNNER_NAME=uv (Astral Rust Runner - Blazing Fast)"
+) else (
+    python --version >nul 2>&1
+    if not errorlevel 1 (
+        set "RUNNER=python"
+        set "RUNNER_NAME=Standard Python"
+    ) else (
+        echo.
+        echo ======================================================================
+        echo  [!] PERINGATAN: Baik 'uv' maupun 'Python' tidak ditemukan di PATH!
+        echo  Silakan instal uv (https://astral.sh/uv) atau Python 3.8+
+        echo ======================================================================
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 :MENU
 cls
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '             UNIVERSAL PAPER DOWNLOADER (Hans x Gravi)                ' -ForegroundColor Yellow; Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '  Engine: 5-Tier Waterfall | Cross-Publisher | Strict 8GB RAM Optimized' -ForegroundColor DarkGray; Write-Host '======================================================================' -ForegroundColor Cyan }"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '             UNIVERSAL PAPER DOWNLOADER (Hans x Gravi)                ' -ForegroundColor Yellow; Write-Host '======================================================================' -ForegroundColor Cyan; Write-Host '  Engine: 5-Tier Waterfall | Cross-Publisher | Strict 8GB RAM Optimized' -ForegroundColor DarkGray; Write-Host '  Runtime: !RUNNER_NAME!' -ForegroundColor Green; Write-Host '======================================================================' -ForegroundColor Cyan }"
 
 echo.
 echo   [1] Unduh Paper Satuan (DOI / URL Nature, ScienceDirect, IEEE, dll)
@@ -48,7 +57,7 @@ goto MENU
 
 :DOWNLOAD_SINGLE
 cls
-python universal_downloader.py
+%RUNNER% universal_downloader.py
 goto RETURN_CHECK
 
 :DOWNLOAD_IEEE_ISSUE
@@ -61,9 +70,9 @@ echo Atau tekan Enter untuk input interaktif via python:
 echo.
 set /p issue_url="Link Issue IEEE > "
 if "%issue_url%"=="" (
-    python universal_downloader.py
+    %RUNNER% universal_downloader.py
 ) else (
-    python universal_downloader.py "%issue_url%"
+    %RUNNER% universal_downloader.py "%issue_url%"
 )
 goto RETURN_CHECK
 
@@ -87,7 +96,7 @@ if not exist "%batch_file%" (
     goto MENU
 )
 
-python universal_downloader.py --file "%batch_file%"
+%RUNNER% universal_downloader.py --file "%batch_file%"
 goto RETURN_CHECK
 
 :OPEN_FOLDER

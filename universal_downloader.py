@@ -14,6 +14,18 @@ Tier 4: IEEE Xplore Open-Access Stamp Resolver (for IEEE articles)
 Tier 5: Sci-Hub Multi-Mirror Fallback (.ru, .st, .se) for paywalled archives
 """
 
+# /// script
+# requires-python = ">=3.8"
+# dependencies = [
+#     "requests>=2.28.0",
+#     "beautifulsoup4>=4.11.0",
+#     "pypdf>=3.0.0",
+#     "pyperclip>=1.8.2",
+#     "pillow>=9.0.0",
+#     "tqdm>=4.64.0",
+# ]
+# ///
+
 import os
 import sys
 import re

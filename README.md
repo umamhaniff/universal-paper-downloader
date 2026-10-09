@@ -50,7 +50,7 @@ Aplikasi ini juga mempertahankan kapabilitas khusus untuk mengunduh seluruh arti
 
 ### 1. Prasyarat Sistem
 Pastikan perangkat Anda sudah terpasang:
-* **Python 3.8 atau lebih baru** ([Unduh Python](https://www.python.org/downloads/)). *Pastikan centang "Add python.exe to PATH" saat instalasi.*
+* **[uv](https://astral.sh/uv) (Sangat Disarankan)** atau **Python 3.8+** ([Unduh Python](https://www.python.org/downloads/)).
 * **Git** (Opsional, untuk clone repositori).
 
 ### 2. Unduh / Clone Repositori
@@ -60,8 +60,16 @@ git clone https://github.com/umamhaniff/universal-paper-downloader.git
 cd universal-paper-downloader
 ```
 
-### 3. Instal Dependensi Python
-Instal seluruh paket pustaka yang dibutuhkan hanya dengan satu perintah:
+### 3. Instal Dependensi
+
+#### ⚡ Opsi A: Menggunakan `uv` (Super Cepat ~200ms & Direkomendasikan)
+Skrip ini sudah mendukung standar **PEP 723 (Inline Script Metadata)**. Anda bahkan **tidak perlu menginstal paket manual**! Cukup jalankan langsung:
+```powershell
+uv run universal_downloader.py
+```
+*(Atau jika ingin menginstal ke virtual environment: `uv pip install -r requirements.txt`)*
+
+#### 🐍 Opsi B: Menggunakan Standard `pip`
 ```powershell
 pip install -r requirements.txt
 ```
