@@ -13,7 +13,7 @@ Proyek ini berevolusi dari sekadar pengunduh jurnal IEEE menjadi **Universal Pap
      - **Tier 1:** Unpaywall API (Legal Open Access & Author Manuscripts)
      - **Tier 2:** OpenAlex Global Scholarly Index (OA URLs & Publisher Direct)
      - **Tier 3:** Semantic Scholar API (Open Access PDFs, otomatis menyaring DOI landing page redirects)
-     - **Tier 4:** IEEE Open Access Stamp Resolver
+     - **Tier 4:** IEEE Open Access Stamp Resolver (resolusi otomatis `arnumber` dari metadata DOI/Crossref; selalu tampil transparan di terminal, atau berstatus `Dilewati (Bukan IEEE)`)
      - **Tier 5:** Sci-Hub Multi-Mirror Pool (`.ren`, `.ru`, `.su`, `.st`, `.wf`) dengan:
        - **In-App Encrypted DoH (1.1.1.1 / 8.8.8.8)** bypass sensor ISP tanpa sentuh OS.
        - **Automated Mirror Failover & Captcha Detection:** Melewati mirror yang terkunci Altcha robot check ke mirror aktif lainnya secara dinamis.
