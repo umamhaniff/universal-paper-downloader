@@ -9,12 +9,16 @@ Proyek ini berevolusi dari sekadar pengunduh jurnal IEEE menjadi **Universal Pap
 1. **Universal DOI & Paper Downloader:** [universal_downloader.py](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/universal_downloader.py)
    - **Standar Eksekusi:** Didukung penuh oleh **Astral `uv`** via standar **PEP 723 (Inline Script Metadata)**.
    - **Input:** DOI apa saja (`10.xxxx/...`), tautan paper dari berbagai publisher, tautan issue IEEE, atau mode batch teks.
-   - **Cascade Pipeline:**
+   - **Cascade Pipeline (True Waterfall with Immediate Verification):**
      - **Tier 1:** Unpaywall API (Legal Open Access & Author Manuscripts)
      - **Tier 2:** OpenAlex Global Scholarly Index (OA URLs & Publisher Direct)
-     - **Tier 3:** Semantic Scholar API (Open Access PDFs)
+     - **Tier 3:** Semantic Scholar API (Open Access PDFs, otomatis menyaring DOI landing page redirects)
      - **Tier 4:** IEEE Open Access Stamp Resolver
-     - **Tier 5:** Sci-Hub Multi-Mirror (`.ru`, `.su`, `.wf`, `.ren`, `.st`) dengan **In-App Encrypted DoH (1.1.1.1 / 8.8.8.8)** bypass untuk sensor ISP tanpa modifikasi OS.
+     - **Tier 5:** Sci-Hub Multi-Mirror Pool (`.ren`, `.ru`, `.su`, `.st`, `.wf`) dengan:
+       - **In-App Encrypted DoH (1.1.1.1 / 8.8.8.8)** bypass sensor ISP tanpa sentuh OS.
+       - **Automated Mirror Failover & Captcha Detection:** Melewati mirror yang terkunci Altcha robot check ke mirror aktif lainnya secara dinamis.
+       - **Hotlink Referer Injection:** Memastikan CDN/storage backend (seperti `sci.bban.top`) dapat mengalirkan berkas utuh tanpa error HTTP 403 Forbidden.
+   - **Fault-Tolerant Resolution:** Setiap tier memvalidasi integritas berkas secara langsung. Jika suatu tier menghasilkan tautan paywalled/korup, alur otomatis melanjutkan cascade ke tier berikutnya hingga berkas PDF valid berhasil disimpan.
    - **Anti-Censorship & Future-Proofing:** In-App DoH socket fallback otomatis saat ISP memblokir domain mirror, serta dukungan konfigurasi pool mirror dinamis via environment variable (`SCIHUB_MIRRORS`).
    - **Visual Output Pipeline:** Memiliki pembatas kotak visual terpisah (Metadata $\rightarrow$ Cascade Check $\rightarrow$ Disk Streaming Chunk $\rightarrow$ Hasil Akhir) serta menu tindakan interaktif pasca-unduh agar sesi tidak tertutup sepihak.
 2. **IEEE Issue Engine:** [ieee_downloader.py](file:///D:/_CampusLife/ProjectLikely/universal_paper_downloader/ieee_downloader.py)
